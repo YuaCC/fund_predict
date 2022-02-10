@@ -18,8 +18,8 @@ class TianTianFundSpider:
         self.driver = Chrome(chrome_driver, chrome_options=option)
         self.fund_ids = None
         self.max_fund_num = 0x7fffffff
-        if not os.path.exists("./data"):
-            os.mkdir("./data")
+        if not os.path.exists("./dataset/"):
+            os.mkdir("./dataset/")
 
     def get_fund_ids(self):
         if self.fund_ids is None:
@@ -58,7 +58,7 @@ class TianTianFundSpider:
                 for fund_id,data in res:
                     data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
                     data = data[::-1]
-                    with open(f"data/{fund_id}.csv", "w") as f:
+                    with open(f"./dataset/{fund_id}.csv", "w") as f:
                         f.writelines(data)
             else:
                 time.sleep(0.1)
