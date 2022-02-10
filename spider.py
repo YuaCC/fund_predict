@@ -18,6 +18,8 @@ class TianTianFundSpider:
         self.driver = Chrome(chrome_driver, chrome_options=option)
         self.fund_ids = None
         self.max_fund_num = 0x7fffffff
+        if not os.path.exists("./data"):
+            os.mkdir("./data")
 
     def get_fund_ids(self):
         if self.fund_ids is None:
