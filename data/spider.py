@@ -47,17 +47,23 @@ class TianTianFundSpider:
             while not finished:
                 res = driver.execute_script("return get_jjjz();")
                 yield res
-                finished = driver.execute_script("return spider_running_workers==0;")
+                finished = driver.execute_script("return spider_running_workers==0&&spider_buf.length==0;")
 
         for res in lsjz_loader():
             if len(res)>0:
                 for fund_id,data in res:
-                    data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
                     data = data[::-1]
+                    for i,item in enumerate(data):
+                        if item['LJJZ']=="":
+                            item['LJJZ'] = data[i-1]['LJJZ']
+                        if item['DWJZ']=="":
+                            item['DWJZ'] = data[i-1]['DWJZ']
+
+                    data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
                     with open(f"./dataset/{fund_id}.csv", "w") as f:
                         f.writelines(data)
             else:
-                time.sleep(0.1)
+                time.sleep(0.2)
 
     def close(self):
         self.driver.quit()
