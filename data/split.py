@@ -12,13 +12,13 @@ with open("files1.txt","w") as f:
     for file in files1:
         with open(os.path.join(data_folder,file)) as csv:
             lines = csv.readlines()
-            if len(lines)>=162:
+            if len(lines)>=243:
                 f.write(file+"\n")
 with open("files2.txt","w") as f:
     for file in files2:
         with open(os.path.join(data_folder,file)) as csv:
             lines = csv.readlines()
-            if len(lines)>=162:
+            if len(lines)>=243:
                 f.write(file+"\n")
 
 

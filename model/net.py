@@ -3,20 +3,20 @@ import torch.nn as nn
 import torchvision
 
 
-def conv7(inchannel, outchannel, stride):
-    return nn.Conv1d(inchannel, outchannel, kernel_size=(7,), stride=(stride,), padding=(3,),bias=False)
+def conv(kernel_size,inchannel, outchannel, stride):
+    return nn.Conv1d(inchannel, outchannel, kernel_size=(kernel_size,), stride=(stride,), padding=(kernel_size//2,),bias=False)
 
 
 class ResBlock(nn.Module):
-    def __init__(self, inchannel, outchannel, stride):
+    def __init__(self,kernel_size, inchannel, outchannel, stride):
         super().__init__()
-        self.conv1 =conv7(inchannel, outchannel, stride)
+        self.conv1 =conv(kernel_size,inchannel, outchannel, stride)
         self.bn1 = nn.BatchNorm1d(outchannel)
         self.relu1 = nn.ReLU()
-        self.conv2 = conv7(outchannel, outchannel, 1)
+        self.conv2 = conv(kernel_size,outchannel, outchannel, 1)
         self.bn2 = nn.BatchNorm1d(outchannel)
         self.relu2 = nn.ReLU()
-        self.downsample = None if inchannel==outchannel else conv7(inchannel,outchannel,stride)
+        self.downsample = None if inchannel==outchannel else conv(kernel_size,inchannel,outchannel,stride)
 
     def forward(self,x):
         res = x
@@ -30,30 +30,44 @@ class ResBlock(nn.Module):
             res = self.downsample(res)
         return x+res
 
+def ConvBlock(in_channel,out_channel,kernel_size,stride,padding):
+    return nn.Sequential(
+        nn.Conv1d(in_channel, out_channel, kernel_size=(kernel_size,), stride=(stride,), padding=(padding,),bias=False),
+        nn.BatchNorm1d(out_channel),
+        nn.ReLU(),
+    )
+
+
 
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
-        self.layer1 = ResBlock(1,3,3)
-        self.layer2 = ResBlock(3,9,3)
-        self.layer3 = ResBlock(9,27,3)
-        self.layer4 = ResBlock(27,81,3)
+
+        self.mean = 1.3333788649293499
+        self.std = 0.9304030330573541
+        self.layer1 = ConvBlock(1,3,7,3,0)
+        self.layer2 = ConvBlock(3,9,7,3,0)
+        self.layer3 = ConvBlock(9,27,5,2,0)
+        self.layer4 = ConvBlock(27,81,5,2,0)
         self.pred = nn.Sequential(
             nn.Linear(120,120,bias=False),
             nn.BatchNorm1d(120),
             nn.ReLU(),
-            nn.Linear(120,3)
+            nn.Linear(120,1)
         )
 
 
     def forward(self,x):
+        B,C,W = x.shape
+        x = (x-self.mean)/self.std
         x1 = self.layer1(x)
         x2 = self.layer2(x1)
         x3 = self.layer3(x2)
         x4 = self.layer4(x3)
-        feat = torch.cat([x1[:,:,-1],x2[:,:,-1],x3[:,:,-1],x4[:,:,-1]],dim=1)
+        feat = torch.cat([x1[:,:,0],x2[:,:,0],x3[:,:,0],x4[:,:,0]],dim=1)
         pred = self.pred(feat)
         return pred
+
 
 if __name__=="__main__":
     net = Net()
