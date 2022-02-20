@@ -53,7 +53,7 @@ conv[27,81,5,2,0]
 ]
 1.0503608 1.0166917
 
-conv4 lr0.1 steplr[3,6] normalize cosine_lr
+conv4 lr0.1 normalize cosine_lr
 [
 conv[1,3,7,3,0]
 conv[3,9,7,3,0]
@@ -62,7 +62,7 @@ conv[27,81,5,2,0]
 ]
 1.0475087 1.0177552
 
-conv4 lr0.1 steplr[3,6] normalize cosine_lr padding
+conv4 lr0.1  normalize cosine_lr padding
 [
 conv[1,3,7,3,3]
 conv[3,9,7,3,3]
@@ -71,7 +71,7 @@ conv[27,81,5,2,2]
 ]
 1.0211637 1.0243529
 
-conv4 lr0.1 steplr[3,6] normalize cosine_lr
+conv4 lr0.1  normalize cosine_lr
 [
 conv[1,4,7,3,0]
 conv[4,16,7,3,0]
@@ -80,7 +80,7 @@ conv[64,128,5,2,0]
 ]
 1.0617498 1.0447211
 
-conv4 lr0.1 steplr[3,6] normalize cosine_lr
+conv4 lr0.1  normalize cosine_lr
 [
 conv[1,8,7,3,0]
 conv[8,32,7,3,0]
@@ -88,3 +88,13 @@ conv[32,128,5,2,0]
 conv[128,256,5,2,0]
 ]
 1.0319474 1.0517993
+
+
+conv4 lr0.1  normalize cosine_lr(T=6) epoch36
+[
+conv[1,8,7,3,0]
+conv[8,32,7,3,0]
+conv[32,128,5,2,0]
+conv[128,256,5,2,0]
+]
+1.095512118881504 1.0360653268848916

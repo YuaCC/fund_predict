@@ -14,7 +14,7 @@ if __name__=='__main__':
         model = Net()
         model.load_state_dict(torch.load(modelname))
         model=model.cuda()
-        val_loader = dataloader('./data/dataset',f'./data/{filea}',None,False,batch_size=64)
+        val_loader = dataloader('./data/dataset',f'./data/{filea}',"test",batch_size=64)
         model = model.eval()
         for x, y in val_loader:
             x = x.cuda()

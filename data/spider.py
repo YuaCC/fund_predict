@@ -121,6 +121,6 @@ class TianTianFundSpider:
 
 if __name__=="__main__":
     chrome_driver = "D:/D/chromedriver/chromedriver.exe"
-    spider = TianTianFundSpider(chrome_driver, headless=False)
+    spider = TianTianFundSpider(chrome_driver, headless=False)#set headless=True in production enviroment
     spider.load_lsjz()
     spider.close()

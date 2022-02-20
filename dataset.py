@@ -1,54 +1,95 @@
 from torch.utils.data import Dataset,DataLoader
+from torchvision.transforms import Compose,ToTensor
 import os
 import numpy as np
 import torch
 
 
 class FundDataset(Dataset):
-    def __init__(self,data_folder,data_file,transform,training):
+    def __init__(self,data_folder,data_file,transform,mode,use_cache=True):
         super(FundDataset, self).__init__()
         self.data_folder = data_folder
         with open(data_file,"r") as f:
             self.files = [line.strip() for line in f.readlines()]
         self.transform = transform
-        self.training = training
+        self.mode = mode
+        self.use_cache = use_cache
+        if self.use_cache:
+            print('loading dataset...')
+            self.cache = []
+            for idx,f in enumerate(self.files):
+                f = os.path.join(self.data_folder, f)
+                data = np.loadtxt(f, dtype=str, delimiter=",")
+                data = data[:, 2].astype(np.float)
+                data = data[::-1].copy()
+                self.cache.append(data)
+                if idx%1000==0:
+                    print(f'{idx}/{len(self.files)}')
 
     def __len__(self):
         return len(self.files)
 
     def __getitem__(self, idx):
-        f = os.path.join(self.data_folder,self.files[idx])
-        data = np.loadtxt(f,dtype=str,delimiter=",")
-        data = data[:,2].astype(np.float)
-        # data = (data - self.mean)/self.std
-        if self.training:
+        if self.use_cache:
+            data = self.cache[idx]
+        else:
+            f = os.path.join(self.data_folder,self.files[idx])
+            data = np.loadtxt(f,dtype=str,delimiter=",")
+            data = data[:,2].astype(np.float)
+            data = data[::-1].copy()
+        if self.mode=="train":
             if len(data)<162:
                 raise ValueError(f'length < 162 {self.files[idx]}',)
-            length = np.random.randint(162,len(data)+1)
-            beg = np.random.randint(len(data)-length+1)
-            data = data[beg:beg+length]
-            data = data[::-1].copy()
-
-            x,y = data[81:],data[:81]
-            x = torch.tensor(x)
-            x = x.unsqueeze(0)
-            if self.transform:
-                x=self.transform(x)
-            y0 = torch.tensor([y[-1],])
-            y = torch.tensor([np.mean(y),])
-            return x.float(),y.float(),y0.float()
-        else:
-            if len(data)<81:
-                raise ValueError(f'length < 81 {self.files[idx]}',)
-            data = data[::-1].copy()
-            data = torch.tensor(data)
-            data = data.unsqueeze(0)
             if self.transform:
                 data=self.transform(data)
-            return data.float(),self.files[idx]
+            data=data.unsqueeze(0)
+            x,y = data[:,81:],data[:,:81]
+            y0 = y[:,-1]
+            y = torch.mean(y,dim=1)
+            return x.float(),y.float(),y0.float()
+        elif self.mode=="val":
+            if len(data)<162:
+                raise ValueError(f'length < 162 {self.files[idx]}',)
+            if self.transform:
+                data=self.transform(data)
+            data=data.unsqueeze(0)
+            x,y = data[:,81:],data[:,:81]
+            y0 = y[:,-1]
+            y = torch.mean(y,dim=1)
+            return x.float(),y.float(),y0.float()
+        elif self.mode=="test":
+            if len(data)<81:
+                raise ValueError(f'length < 81 {self.files[idx]}',)
+            if self.transform:
+                data=self.transform(data)
+            x = data.unsqueeze(0)
+            return x.float(),self.files[idx]
+        else:
+            raise ValueError(f"mode {self.mode} not supported yet")
 
 
-def train_collate_fn(data):
+class Spliter:
+    def __init__(self,length_min):
+        self.length_min = length_min
+
+    def __call__(self, data):
+        if len(data) < self.length_min:
+            raise ValueError(f'length < {self.length_min} ', )
+        length = np.random.randint(self.length_min, len(data) + 1)
+        beg = np.random.randint(len(data) - length + 1)
+        data = data[beg:beg + length]
+        return data
+
+class Scaler:
+    def __init__(self,a):
+        self.a=a
+    def __call__(self, x):
+        r = (np.random.rand()*2-1)*self.a
+        r = np.power(2,r)
+        return x*r
+
+
+def trainval_collate_fn(data):
     length = max(d[0].shape[1] for d in data)
     length = max(length,727)
     batch = len(data)
@@ -61,7 +102,7 @@ def train_collate_fn(data):
     return x,y,y0
 
 
-def val_collate_fn(data):
+def test_collate_fn(data):
     length = max(d[0].shape[1] for d in data)
     length = max(length,727)
     batch = len(data)
@@ -73,19 +114,36 @@ def val_collate_fn(data):
     return x,y
 
 
-def dataloader(data_folder,data_file,transform,training,batch_size=16):
-    dataset = FundDataset(data_folder,data_file,transform,training)
-    if training:
-        return DataLoader(dataset,batch_size,shuffle=True,collate_fn=train_collate_fn)
+def dataloader(data_folder,data_file,mode,batch_size=16):
+    if mode=="train":
+        transform = Compose([
+            Spliter(243),
+            torch.tensor,
+        ])
+        dataset = FundDataset(data_folder,data_file,transform,mode)
+        return DataLoader(dataset,batch_size,shuffle=True,num_workers=2,pin_memory=True,drop_last=True,collate_fn=trainval_collate_fn)
+    elif mode=="val":
+        transform = Compose([
+            Spliter(243),
+            torch.tensor,
+        ])
+        dataset = FundDataset(data_folder, data_file, transform, mode)
+        return DataLoader(dataset,batch_size,shuffle=True,num_workers=2,pin_memory=True,collate_fn=trainval_collate_fn)
+    elif mode=="test":
+        transform = Compose([
+            torch.tensor,
+        ])
+        dataset = FundDataset(data_folder, data_file, transform, mode)
+        return DataLoader(dataset,batch_size,shuffle=True,num_workers=2,pin_memory=True,collate_fn=test_collate_fn)
     else:
-        return DataLoader(dataset,batch_size,shuffle=True,collate_fn=val_collate_fn)
+        raise ValueError(f"mode {mode} not supported yet")
 
 def cal_mean_std():
     from torchvision.transforms import Compose,ToTensor,Normalize
     import numpy as np
-    transform = Compose([])
-    dataset1 = FundDataset('./data/dataset','./data/files1.txt',transform,False)
-    dataset2 = FundDataset('./data/dataset','./data/files2.txt',transform,False)
+    transform = Scaler(1)
+    dataset1 = FundDataset('./data/dataset','./data/files1.txt',transform,"val")
+    dataset2 = FundDataset('./data/dataset','./data/files2.txt',transform,"val")
     Ex = 0
     Ex2 = 0
     for d in dataset1:
