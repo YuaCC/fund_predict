@@ -23,8 +23,7 @@ if __name__=='__main__':
                 x,y,y0 = x.cuda(),y.cuda(),y0.cuda()
                 optim.zero_grad()
                 pred = model(x)
-                pred[pred<=0] =0
-                loss = -(pred * y/y0).sum()/(pred.abs().sum()+1)
+                loss = -(pred * y/y0).sum()/(pred.sum()+1)
                 loss.backward()
                 optim.step()
             lr_scheduler.step()
@@ -37,9 +36,6 @@ if __name__=='__main__':
                 x,y,y0 = x.cuda(),y.cuda(),y0.cuda()
                 money_in = model(x)
                 money_out = money_in/y0*y
-                mask = money_in<=0
-                money_in[mask] = 0
-                money_out[mask] =0
 
                 money_in_sum += money_in.detach().cpu().sum(dim=0).numpy()
                 money_out_sum += money_out.detach().cpu().sum(dim=0).numpy()
