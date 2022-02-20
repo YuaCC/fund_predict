@@ -45,15 +45,15 @@ class Net(nn.Module):
 
         self.mean = 1.3333788649293499
         self.std = 0.9304030330573541
-        self.layer1 = ConvBlock(1,3,7,3,0)
-        self.layer2 = ConvBlock(3,9,7,3,0)
-        self.layer3 = ConvBlock(9,27,5,2,0)
-        self.layer4 = ConvBlock(27,81,5,2,0)
+        self.layer1 = ConvBlock(1,4,7,3,0)
+        self.layer2 = ConvBlock(4,16,7,3,0)
+        self.layer3 = ConvBlock(16,64,5,2,0)
+        self.layer4 = ConvBlock(64,128,5,2,0)
         self.pred = nn.Sequential(
-            nn.Linear(120,120,bias=False),
-            nn.BatchNorm1d(120),
+            nn.Linear(212,212,bias=False),
+            nn.BatchNorm1d(212),
             nn.ReLU(),
-            nn.Linear(120,1)
+            nn.Linear(212,1)
         )
 
 

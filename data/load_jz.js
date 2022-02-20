@@ -8,7 +8,7 @@ load_jjjz=function (idx){
     if (idx<spider_fund_ids.length){
         if (spider_buf.length < spider_buf_max_length){
             jQuery.getJSON(
-                `//api.fund.eastmoney.com/f10/lsjz?callback=?&fundCode=${spider_fund_ids[idx]}&pageIndex=1&pageSize=2000000000&startDate=&endDate=`,
+                `//api.fund.eastmoney.com/f10/lsjz?callback=?&fundCode=${spider_fund_ids[idx]}&pageIndex=1&pageSize=2000000000&startDate=${spider_update_date[idx]}&endDate=`,
                 function (data){
                     spider_buf.push([spider_fund_ids[idx],data['Data']['LSJZList']])
                     console.log(`${spider_fund_ids[idx]} ok, ${data['TotalCount']} items in total`);

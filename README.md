@@ -1,12 +1,18 @@
 # fund_predict
 尝试使用神经网络预测基金数据。
-目前完成了爬虫爬取基金净值部分。
-# 通过爬虫爬取基金净值数据
+# 通过神经网络寻找最大收益策略
+基本方案：输入为基金过去历史净值数据，输出为评分权重。<br>
+损失函数：设<img src="http://latex.codecogs.com/gif.latex?T_{i,j}" />
+为买入后第i个基金第j日的历史净值，<img src="http://latex.codecogs.com/gif.latex?W_{i}" />为模型赋予该基金的权重则
+<img src="http://latex.codecogs.com/gif.latex? Loss=\frac{\sum_{i}{w_i\sum_{j=0}^{80}{T_{i,j}/T_{i,0}}}}{\sum_{i}w_i}" /><br>
+模型整体架构：4层卷积。（LSTM与transformer尝试中...）
+# 使用方法
+首先通过爬虫爬取当日基金净值数据，并且划分为两个部分。然后在两个数据集上分别训练模型并且进行测试
 ```sh
 cd ./data/
 python spider.py
-<<<<<<< HEAD
+python split.py
+cd ..
+python train.py
+python test.py
 ```
-# 通过神经网络寻找最大收益策略
-尝试通过LSTM，CNN，TransformerEncoder来最大化基金买卖收益。但是收益一直非常低。
-具体策略为，给出过去81天的净值数据，尝试寻找最佳买卖策略，(分别用第9,27,81天的价格均值减去买入价格再乘以买入权重)
