@@ -80,9 +80,11 @@ class Spliter:
         data = data[beg:beg + length]
         return data
 
+
 class Scaler:
     def __init__(self,a):
         self.a=a
+
     def __call__(self, x):
         r = (np.random.rand()*2-1)*self.a
         r = np.power(2,r)
@@ -117,6 +119,7 @@ def test_collate_fn(data):
 def dataloader(data_folder,data_file,mode,batch_size=16):
     if mode=="train":
         transform = Compose([
+            Scaler(1),
             Spliter(243),
             torch.tensor,
         ])

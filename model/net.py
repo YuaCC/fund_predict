@@ -30,13 +30,13 @@ class ResBlock(nn.Module):
             res = self.downsample(res)
         return x+res
 
+
 def ConvBlock(in_channel,out_channel,kernel_size,stride,padding):
     return nn.Sequential(
         nn.Conv1d(in_channel, out_channel, kernel_size=(kernel_size,), stride=(stride,), padding=(padding,),bias=False),
         nn.BatchNorm1d(out_channel),
         nn.ReLU(),
     )
-
 
 
 class Net(nn.Module):
@@ -56,7 +56,6 @@ class Net(nn.Module):
             nn.Linear(212,1),
             nn.ReLU()
         )
-
 
     def forward(self,x):
         B,C,W = x.shape

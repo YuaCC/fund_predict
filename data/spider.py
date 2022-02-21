@@ -20,17 +20,17 @@ class TianTianFundSpider:
         self.fund_ids = self.get_fund_ids()[:self.max_fund_num]
         if not os.path.exists(self.dataset_folder):
             os.mkdir(self.dataset_folder)
+
+        self.update_log = {}
+        self.load_update_log()
+
+    def load_update_log(self):
         if not os.path.exists(self.update_log_file):
             if os.path.exists(self.update_log_file_tmp):
                 os.rename(self.update_log_file_tmp,self.update_log_file)
             else:
                 f = open(self.update_log_file,'w')
                 f.close()
-
-        self.update_log = {}
-        self.load_update_log()
-
-    def load_update_log(self):
         with open(self.update_log_file,"r") as f:
             lines = f.readlines()
             for line in lines:
