@@ -53,8 +53,7 @@ class Net(nn.Module):
             nn.Linear(212,212,bias=False),
             nn.BatchNorm1d(212),
             nn.ReLU(),
-            nn.Linear(212,1),
-            nn.ReLU()
+            nn.Linear(212,1)
         )
 
     def forward(self,x):

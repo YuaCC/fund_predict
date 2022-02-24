@@ -1,7 +1,9 @@
-from selenium.webdriver import Chrome, ChromeOptions
 import datetime
-import time
 import os
+import time
+
+from selenium.webdriver import Chrome, ChromeOptions
+
 
 class TianTianFundSpider:
     '''
@@ -27,29 +29,29 @@ class TianTianFundSpider:
     def load_update_log(self):
         if not os.path.exists(self.update_log_file):
             if os.path.exists(self.update_log_file_tmp):
-                os.rename(self.update_log_file_tmp,self.update_log_file)
+                os.rename(self.update_log_file_tmp, self.update_log_file)
             else:
-                f = open(self.update_log_file,'w')
+                f = open(self.update_log_file, 'w')
                 f.close()
-        with open(self.update_log_file,"r") as f:
+        with open(self.update_log_file, "r") as f:
             lines = f.readlines()
             for line in lines:
-                fund_id,update_date,op = line.strip().split(",")
-                if op=="beg":
+                fund_id, update_date, op = line.strip().split(",")
+                if op == "beg":
                     self.update_log[fund_id] = None
-                elif op=="end":
+                elif op == "end":
                     self.update_log[fund_id] = update_date
                 else:
                     raise ValueError(f"op {op} not supported yet")
 
     def save_update_log(self):
-        with open(self.update_log_file_tmp,"w") as f:
-            for fund_id in self.update_log :
+        with open(self.update_log_file_tmp, "w") as f:
+            for fund_id in self.update_log:
                 if self.update_log[fund_id] is not None:
                     f.write(f"{fund_id},{self.update_log[fund_id]},end\n")
         if os.path.exists(self.update_log_file):
             os.remove(self.update_log_file)
-        os.rename(self.update_log_file_tmp,self.update_log_file)
+        os.rename(self.update_log_file_tmp, self.update_log_file)
 
     def get_fund_ids(self):
         url_api = "http://fund.eastmoney.com/Data/Fund_JJJZ_Data.aspx?t=1&lx=1&letter=&gsid=&text=&sort=zdf,desc&page=1,2000000000&dt={}&atfc=&onlySale=0"
@@ -72,7 +74,7 @@ class TianTianFundSpider:
             if fund_id not in self.update_log or self.update_log[fund_id] is None:
                 update_date.append('')
             else:
-                last_timestamp = datetime.datetime.strptime(self.update_log[fund_id],"%Y-%m-%d")
+                last_timestamp = datetime.datetime.strptime(self.update_log[fund_id], "%Y-%m-%d")
                 next_timestamp = last_timestamp + datetime.timedelta(days=1)
                 update_date.append(next_timestamp.strftime("%Y-%m-%d"))
         driver = self.driver
@@ -91,19 +93,21 @@ class TianTianFundSpider:
                 res = driver.execute_script("return get_jjjz();")
                 yield res
                 finished = driver.execute_script("return spider_running_workers==0&&spider_buf.length==0;")
-        with open(self.update_log_file,'a') as update_log_file:
+
+        with open(self.update_log_file, 'a') as update_log_file:
             for res in lsjz_loader():
-                if len(res)>0:
-                    for fund_id,data in res:
+                if len(res) > 0:
+                    for fund_id, data in res:
                         data = data[::-1]
-                        for i,item in enumerate(data):
-                            if item['LJJZ']=="":
-                                item['LJJZ'] = data[i-1]['LJJZ']
-                            if item['DWJZ']=="":
-                                item['DWJZ'] = data[i-1]['DWJZ']
+                        for i, item in enumerate(data):
+                            if item['LJJZ'] == "":
+                                item['LJJZ'] = data[i - 1]['LJJZ']
+                            if item['DWJZ'] == "":
+                                item['DWJZ'] = data[i - 1]['DWJZ']
                         data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
-                        data_file = os.path.join(self.dataset_folder,f"{fund_id}.csv")
-                        if os.path.exists(data_file) and (fund_id not in self.update_log or self.update_log[fund_id] is None):
+                        data_file = os.path.join(self.dataset_folder, f"{fund_id}.csv")
+                        if os.path.exists(data_file) and (
+                                fund_id not in self.update_log or self.update_log[fund_id] is None):
                             os.remove(data_file)
                         with open(data_file, "a") as f:
                             self.update_log[fund_id] = today
@@ -119,8 +123,8 @@ class TianTianFundSpider:
         print("driver closed")
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     chrome_driver = "D:/D/chromedriver/chromedriver.exe"
-    spider = TianTianFundSpider(chrome_driver, headless=False)#set headless=True in production enviroment
+    spider = TianTianFundSpider(chrome_driver, headless=False)  # set headless=True in production enviroment
     spider.load_lsjz()
     spider.close()
