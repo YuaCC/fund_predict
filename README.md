@@ -7,7 +7,7 @@
 <img src="http://latex.codecogs.com/gif.latex? Loss=\frac{\sum_{i}{w_i\sum_{j=0}^{80}{T_{i,j}/T_{i,0}}}}{\sum_{i}w_i}" /><br>
 模型整体架构：4层卷积。（LSTM与transformer尝试中...）
 # 使用方法
-首先通过爬虫爬取当日基金净值数据，并且划分为两个部分。然后在两个数据集上分别训练模型并且进行测试
+首先通过爬虫爬取当日基金净值数据，然后筛选出时间较长的基金，然后训练
 ```sh
 cd ./data/
 python spider.py
