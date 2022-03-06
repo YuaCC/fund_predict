@@ -16,8 +16,10 @@ class TianTianFundSpider:
             option.add_argument("headless")
         self.driver = Chrome(chrome_driver, chrome_options=option)
         self.dataset_folder = "./dataset/"
-        self.update_log_file = "./dataset/updatelog.txt"
-        self.update_log_file_tmp = "./dataset/updatelog.txt.tmp"
+        self.update_log_file = "./updatelog.csv"
+        self.update_log_file_tmp = "./updatelog.csv.tmp"
+        self.sgzt_file = './sgzt.csv'
+        self.sgzt_file_tmp = './sgzt.csv.tmp'
         self.max_fund_num = 0x7fffffff
         self.fund_ids = self.get_fund_ids()[:self.max_fund_num]
         if not os.path.exists(self.dataset_folder):
@@ -25,6 +27,34 @@ class TianTianFundSpider:
 
         self.update_log = {}
         self.load_update_log()
+
+        self.sgzt = {}
+        self.load_sgzt()
+
+    def load_sgzt(self):
+        if not os.path.exists(self.sgzt_file):
+            if os.path.exists(self.sgzt_file_tmp):
+                os.rename(self.sgzt_file_tmp, self.sgzt_file)
+            else:
+                f = open(self.sgzt_file, 'w')
+                f.close()
+        with open(self.sgzt_file, "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                fund_id, state = line.strip().split(",")
+                if state == "True" or state=="False":
+                    self.sgzt[fund_id] = state
+                else:
+                    raise ValueError(f"state {state} not supported yet")
+
+    def save_sgzt(self):
+        with open(self.sgzt_file_tmp, "w") as f:
+            for fund_id in self.sgzt:
+                if self.sgzt[fund_id] is not None:
+                    f.write(f"{fund_id},{self.sgzt[fund_id]}\n")
+        if os.path.exists(self.sgzt_file):
+            os.remove(self.sgzt_file)
+        os.rename(self.sgzt_file_tmp, self.sgzt_file)
 
     def load_update_log(self):
         if not os.path.exists(self.update_log_file):
@@ -94,29 +124,41 @@ class TianTianFundSpider:
                 yield res
                 finished = driver.execute_script("return spider_running_workers==0&&spider_buf.length==0;")
 
-        with open(self.update_log_file, 'a') as update_log_file:
-            for res in lsjz_loader():
-                if len(res) > 0:
-                    for fund_id, data in res:
-                        data = data[::-1]
-                        for i, item in enumerate(data):
-                            if item['LJJZ'] == "":
-                                item['LJJZ'] = data[i - 1]['LJJZ']
-                            if item['DWJZ'] == "":
-                                item['DWJZ'] = data[i - 1]['DWJZ']
-                        data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
-                        data_file = os.path.join(self.dataset_folder, f"{fund_id}.csv")
-                        if os.path.exists(data_file) and (
-                                fund_id not in self.update_log or self.update_log[fund_id] is None):
-                            os.remove(data_file)
-                        with open(data_file, "a") as f:
-                            self.update_log[fund_id] = today
-                            update_log_file.write(f"{fund_id},{today},beg\n")
-                            f.writelines(data)
-                            update_log_file.write(f"{fund_id},{today},end\n")
-                else:
-                    time.sleep(0.2)
+        with open(self.sgzt_file, 'a') as sgzt_file:
+            with open(self.update_log_file, 'a') as update_log_file:
+                for res in lsjz_loader():
+                    if len(res) > 0:
+                        for fund_id, data in res:
+                            data = data[::-1]
+                            for i, item in enumerate(data):
+                                if item['LJJZ'] == "":
+                                    item['LJJZ'] = data[i - 1]['LJJZ']
+                                if item['DWJZ'] == "":
+                                    item['DWJZ'] = data[i - 1]['DWJZ']
+                            if len(data)>0:
+                                if data[-1]['SGZT']=='开放申购' or data[-1]['SGZT']=='限制大额申购':
+                                    self.sgzt[fund_id]='True'
+                                else:
+                                    self.sgzt[fund_id]='False'
+                                sgzt_file.write(f"{fund_id},{self.sgzt[fund_id]}\n")
+                                sgzt_file.flush()
+
+                            data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
+                            data_file = os.path.join(self.dataset_folder, f"{fund_id}.csv")
+                            if os.path.exists(data_file) and (
+                                    fund_id not in self.update_log or self.update_log[fund_id] is None):
+                                os.remove(data_file)
+                            with open(data_file, "a") as f:
+                                self.update_log[fund_id] = today
+                                update_log_file.write(f"{fund_id},{today},beg\n")
+                                update_log_file.flush()
+                                f.writelines(data)
+                                update_log_file.write(f"{fund_id},{today},end\n")
+                                update_log_file.flush()
+                    else:
+                        time.sleep(0.2)
         self.save_update_log()
+        self.save_sgzt()
 
     def close(self):
         self.driver.quit()

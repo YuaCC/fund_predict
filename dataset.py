@@ -52,12 +52,14 @@ def train_collate_fn(data):
     x = torch.zeros((batch, 1, max_length))
     for i in range(batch):
         l = data[i].shape[1]
-        x[i][:, :l] = data[i]
-    beg = np.random.randint(81,min_length-162+1)
-    x = x[:,:,beg:]
+        beg = np.random.randint(81,l-162+1)
+        x[i][:, :l-beg] = data[i][:,beg:]
+    x = x / x[:,:,0:1]
     x,y = x[:,:,81:],x[:,:,:81]
     y0 = y[:,:,80]
     y = torch.mean(y,dim=2)
+    if x[:,:,0].min()==0:
+        print("!!!")
     return x, y, y0
 
 
@@ -69,6 +71,7 @@ def val_collate_fn(data):
     for i in range(batch):
         l = data[i].shape[1]
         x[i][:, :l] = data[i]
+    x = x / x[:,:,0:1]
     x,y = x[:,:,81:],x[:,:,:81]
     y0 = y[:,:,80]
     y = torch.mean(y,dim=2)
@@ -101,7 +104,7 @@ def dataloader(data_folder, data_file, batch_size=16):
         if idx % 1000 == 0:
             print(f'{idx}/{len(files)}')
     train_transform = Compose([
-        Scaler(1),
+        # Scaler(1),
         torch.tensor,
     ])
     dataset = FundDataset(datas, files, train_transform, 'train')

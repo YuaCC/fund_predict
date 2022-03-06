@@ -4,7 +4,7 @@ from dataset import dataloader
 from model.net import Net
 
 if __name__ == '__main__':
-    files = './data/files.txt'
+    files = './data/test_files.txt'
     dataset_folder = './data/dataset'
     weight_file = 'best_model.pkl'
     results = []

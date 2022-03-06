@@ -54,7 +54,7 @@ def val(model,val_loader):
 
 if __name__ == '__main__':
     dataset_folder = './data/dataset'
-    files_list = './data/files.txt'
+    files_list = './data/trainval_files.txt'
     weight_file = 'best_model.pkl'
     model = Net().cuda()
     train_loader,val_loader,test_loader = dataloader(dataset_folder,files_list,64)
