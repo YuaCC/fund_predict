@@ -43,8 +43,8 @@ class Net(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.mean = 1.3333788649293499
-        self.std = 0.9304030330573541
+        self.mean = 0.8849385890565288
+        self.std = 0.2190219816947061
         self.layer1 = ConvBlock(2,4,7,3,0)
         self.layer2 = ConvBlock(4,16,7,3,0)
         self.layer3 = ConvBlock(16,64,5,2,0)
@@ -53,7 +53,7 @@ class Net(nn.Module):
             nn.Linear(212,212,bias=False),
             nn.BatchNorm1d(212),
             nn.ReLU(),
-            nn.Linear(212,1)
+            nn.Linear(212,1,bias=False)
         )
 
     def forward(self,x):

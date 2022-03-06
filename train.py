@@ -58,12 +58,12 @@ if __name__ == '__main__':
     weight_file = 'best_model.pkl'
     model = Net().cuda()
     train_loader,val_loader,test_loader = dataloader(dataset_folder,files_list,64)
-    optim = Adam(model.parameters(), lr=0.1)
+    optim = Adam(model.parameters(), lr=0.01)
     # lr_scheduler = MultiStepLR(optim,milestones=[3,6],gamma=0.1)
     lr_scheduler = CosineAnnealingLR(optim, 6)
     epoch = 36
     eps = 0.0001
-    regular_factor = 0.001
+    regular_factor = 0.01
     best_yinlilv = 0
     for i in range(epoch):
         train(model,train_loader,lr_scheduler)
