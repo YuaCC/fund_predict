@@ -127,36 +127,36 @@ class TianTianFundSpider:
         with open(self.sgzt_file, 'a') as sgzt_file:
             with open(self.update_log_file, 'a') as update_log_file:
                 for res in lsjz_loader():
-                    if len(res) > 0:
-                        for fund_id, data in res:
-                            data = data[::-1]
-                            for i, item in enumerate(data):
-                                if item['LJJZ'] == "":
-                                    item['LJJZ'] = data[i - 1]['LJJZ']
-                                if item['DWJZ'] == "":
-                                    item['DWJZ'] = data[i - 1]['DWJZ']
-                            if len(data)>0:
-                                if data[-1]['SGZT']=='开放申购' or data[-1]['SGZT']=='限制大额申购':
-                                    self.sgzt[fund_id]='True'
-                                else:
-                                    self.sgzt[fund_id]='False'
-                                sgzt_file.write(f"{fund_id},{self.sgzt[fund_id]}\n")
-                                sgzt_file.flush()
-
-                            data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
-                            data_file = os.path.join(self.dataset_folder, f"{fund_id}.csv")
-                            if os.path.exists(data_file) and (
-                                    fund_id not in self.update_log or self.update_log[fund_id] is None):
-                                os.remove(data_file)
-                            with open(data_file, "a") as f:
-                                self.update_log[fund_id] = today
-                                update_log_file.write(f"{fund_id},{today},beg\n")
-                                update_log_file.flush()
-                                f.writelines(data)
-                                update_log_file.write(f"{fund_id},{today},end\n")
-                                update_log_file.flush()
-                    else:
+                    if len(res) <= 0:
                         time.sleep(0.2)
+                        continue
+                    for fund_id, data in res:
+                        data = data[::-1]
+                        for i, item in enumerate(data):
+                            if item['LJJZ'] == "":
+                                item['LJJZ'] = data[i - 1]['LJJZ']
+                            if item['DWJZ'] == "":
+                                item['DWJZ'] = data[i - 1]['DWJZ']
+                        if len(data)>0:
+                            if data[-1]['SGZT']=='开放申购' or data[-1]['SGZT']=='限制大额申购':
+                                self.sgzt[fund_id]='True'
+                            else:
+                                self.sgzt[fund_id]='False'
+                            sgzt_file.write(f"{fund_id},{self.sgzt[fund_id]}\n")
+                            sgzt_file.flush()
+
+                        data = ['{},{},{}\n'.format(item['FSRQ'], item['DWJZ'], item['LJJZ']) for item in data]
+                        data_file = os.path.join(self.dataset_folder, f"{fund_id}.csv")
+                        if os.path.exists(data_file) and (
+                                fund_id not in self.update_log or self.update_log[fund_id] is None):
+                            os.remove(data_file)
+                        with open(data_file, "a") as f:
+                            self.update_log[fund_id] = today
+                            update_log_file.write(f"{fund_id},{today},beg\n")
+                            update_log_file.flush()
+                            f.writelines(data)
+                            update_log_file.write(f"{fund_id},{today},end\n")
+                            update_log_file.flush()
         self.save_update_log()
         self.save_sgzt()
 
